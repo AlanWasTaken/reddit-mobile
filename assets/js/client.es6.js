@@ -153,6 +153,9 @@ function initialize(bindLinks) {
 
   global.random = randomBySeed(config.seed);
   var app = new App(config);
+
+  global.app = app;
+
   app.emitter.setMaxListeners(30);
 
   if (app.getState('token')) {

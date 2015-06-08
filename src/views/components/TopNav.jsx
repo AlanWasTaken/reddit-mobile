@@ -123,6 +123,14 @@ class TopNav extends React.Component {
         </SeashellsDropdown>
       );
     }
+
+    let notificationsCount;
+    if (props.user && props.user.inbox_count) {
+      notificationsCount = (
+        <span className='badge badge-xs badge-orangered'>{ props.user.inbox_count }</span>
+      );
+    }
+
     return (
       <nav className={'TopNav' + (this.state.sideNavOpen ? ' opened' : '')}>
         <div className='pull-left TopNav-padding TopNav-left' key='topnav-menu'>
@@ -148,6 +156,7 @@ class TopNav extends React.Component {
           </MobileButton>
           <MobileButton className='TopNav-floaty TopNav-hamburger' onClick={this._onClick.bind(this, 'hamburger')}>
             <HamburgerIcon altered={this.state.sideNavOpen}/>
+            { notificationsCount }
           </MobileButton>
         </div>
       </nav>

@@ -24,6 +24,7 @@ import ErrorPage from './views/pages/error';
 import FAQPage from './views/pages/faq';
 import LoginPage from './views/pages/login';
 import RegisterPage from './views/pages/register';
+import MessagesPage from './views/pages/messages';
 import Layout from './views/layouts/DefaultLayout';
 import BodyLayout from './views/layouts/BodyLayout';
 import TextSubNav from './views/components/TextSubNav';
@@ -912,6 +913,73 @@ function routes(app) {
     });
 
     this.redirect(`/search?${query}`);
+  });
+
+  router.get('messages', '/message/:view', function *(next) {
+    if (!this.token) {
+      let query = {
+        originalUrl: this.url,
+      }
+
+      return this.redirect('/login?' + querystring.stringify(query));
+    }
+
+    var page;
+    var ctx = this;
+
+    var props = buildProps(this, {
+      title: `Messages`,
+      view: ctx.params.view,
+      metaDescription: `user messages reddit.com`,
+    });
+
+    var promises = [
+      MessagesPage.populateData(props.api, props, this.renderSynchronous, this.useCache),
+    ];
+
+    var [data, user, prefs, subscriptions] = yield populateData(app, ctx, ctx.token, promises);
+    props.data = data;
+    props.user = user;
+    props.prefs = prefs;
+    props.subscriptions = subscriptions;
+
+    var key = `user-messages-${ctx.params.view}`;
+
+    let modMailLink;
+
+    if (props.user.is_mod) {
+      modMailLink= (
+        <li className='TextSubNav-li' active={props.view === 'moderator'}>
+          <a className={'TextSubNav-a ' + (props.view === 'moderator' ? 'active' : '') } href='/message/moderator'>Mod Mail</a>
+        </li>
+      );
+    }
+
+    try {
+      page = (
+        <BodyLayout {...props} app={app}>
+          <TextSubNav>
+            <li className='TextSubNav-li' active={props.view === 'messages'}>
+              <a className={'TextSubNav-a ' + (props.view === 'messages' ? 'active' : '') } href='/message/messages'>Messages</a>
+            </li>
+            <li className='TextSubNav-li' active={props.view === 'inbox'}>
+              <a className={'TextSubNav-a ' + (props.view === 'inbox' ? 'active' : '') } href='/message/inbox'>Replies</a>
+            </li>
+            { modMailLink }
+            <li className='TextSubNav-li' active={props.view === 'mentions'}>
+              <a className={'TextSubNav-a ' + (props.view === 'mentions' ? 'active' : '') } href='/message/mentions'>Mentions</a>
+            </li>
+          </TextSubNav>
+          <MessagesPage {...props} key={ key } app={app} />
+        </BodyLayout>
+      );
+    } catch (e) {
+      return app.error(e, this, next);
+    }
+
+    this.body = page;
+    this.layout = Layout;
+    this.props = props;
   });
 }
 
